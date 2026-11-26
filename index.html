@@ -85,6 +85,7 @@
 const CRIT = [['carisma','CARISMA'],['participacao','PARTICIPAÇÃO NO GRUPO'],['amado','AMADO']];
 const membros = ['angelo','estavao','Gyovanne','Markola','Menezes','markin','pedro','Paulo','rich','Sarah','yuzin','yan','Gustavo','gabriel pérez','mari','Matheus'];
 const apuracao = new Date('2026-11-26T03:23:47-03:00').getTime();
+const LIBERADO = true;   // resultado aberto antes do horário, a pedido
 // Votos guardados no ntfy.sh (sem conta). Cada mensagem some em 12 h, então a página regrava uma "foto" de todos os votos a cada 2 h.
 const TOPICO = 'https://ntfy.sh/urna-cc5df29bda467cb0f9';
 let desvio = 0, eleitor = localStorage.getItem('eleitor');
@@ -148,7 +149,7 @@ async function acao(a) {
   if (!digitado || +digitado > 10) return;
   notas[CRIT[crit][0]] = +digitado; digitado = '';
   if (crit < 2) { crit++; desenha(); return; }
-  if (Date.now() + desvio >= apuracao) { etapa = 'encerrada'; desenha(); return; }
+  if (LIBERADO || Date.now() + desvio >= apuracao) { etapa = 'encerrada'; desenha(); return; }
   let r;
   try { r = await fetch(TOPICO, { method: 'POST', body: JSON.stringify({ t: 'voto', e: eleitor, m: membro, n: notas }) }); } catch (e) {}
   if (!r || !r.ok) { alert('Erro ao votar, tente de novo'); etapa = 'numero'; desenha(); return; }
@@ -217,7 +218,7 @@ async function estado() {
   let votos;
   try { votos = await leVotos(); } catch (e) { return false; }
   $('eleitores').textContent = Object.keys(votos).length + ' pessoa(s) já votaram';
-  if (Date.now() + desvio >= apuracao) { mostraResultado(resultado(votos)); $('timer').innerHTML = '<b>APURAÇÃO ENCERRADA</b>'; return true; }
+  if (LIBERADO || Date.now() + desvio >= apuracao) { mostraResultado(resultado(votos)); $('timer').innerHTML = '<b>APURAÇÃO ENCERRADA</b>'; return true; }
   return false;
 }
 
