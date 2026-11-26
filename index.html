@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Urna do Grupo</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,Helvetica,sans-serif;background:#d9d4c7;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px;gap:14px;color:#111}
+  #timer{background:#111;color:#7CFC7C;font-family:"Courier New",monospace;padding:10px 18px;border-radius:8px;text-align:center;width:100%;max-width:760px}
+  #timer b{font-size:28px;letter-spacing:2px;display:block}
+  .urna{background:#e8e2d2;border:3px solid #b9b19c;border-radius:14px;box-shadow:0 8px 0 #a59d88;padding:16px;display:flex;gap:16px;width:100%;max-width:760px;flex-wrap:wrap}
+  .tela{flex:1 1 380px;background:#f4f4f0;border:8px solid #555;border-radius:6px;min-height:330px;padding:14px;display:flex;flex-direction:column;font-size:15px;position:relative}
+  .tela h1{font-size:15px;font-weight:normal;margin-bottom:10px}
+  .tela .cargo{font-size:22px;font-weight:bold;text-align:center;margin:6px 0 14px}
+  .campo{display:flex;align-items:center;gap:10px;margin:6px 0}
+  .digitos{display:flex;gap:6px}
+  .digitos span{width:38px;height:48px;border:1.5px solid #333;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;background:#fff}
+  .digitos span.pisca{animation:p 1s steps(2) infinite}
+  @keyframes p{50%{background:#333}}
+  .nome{font-size:20px;font-weight:bold;margin:10px 0 4px}
+  .notas{font-size:14px;margin-top:6px;line-height:1.6}
+  .rodape{margin-top:auto;border-top:1.5px solid #333;padding-top:8px;font-size:13px;line-height:1.5}
+  .fim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;font-weight:bold;letter-spacing:6px;color:#222}
+  .lado{flex:0 1 250px;display:flex;flex-direction:column;gap:10px;margin:auto}
+  .marca{text-align:center;font-weight:bold;font-size:13px;color:#4a4536;letter-spacing:1px}
+  .teclado{background:#222;border-radius:10px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .teclado button{background:#111;color:#fff;border:none;border-radius:6px;height:46px;font-size:22px;font-weight:bold;cursor:pointer;box-shadow:0 3px 0 #000}
+  .teclado button:active{transform:translateY(2px);box-shadow:none}
+  .teclado .zero{grid-column:2}
+  .acoes{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:7px}
+  .acoes button{border:none;border-radius:6px;height:50px;font-weight:bold;font-size:12px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+  .branco{background:#fff}.corrige{background:#e8742b}.confirma{background:#2ea44f;height:58px!important}
+  .cola{background:#fffdf5;border:2px dashed #b9b19c;border-radius:10px;padding:12px 16px;width:100%;max-width:760px;font-size:14px}
+  .cola h2{font-size:15px;margin-bottom:8px}
+  .cola ul{list-style:none;columns:3;column-gap:16px}
+  .cola li{padding:2px 0}
+  .cola li.ok{color:#2ea44f}
+  .cola li.ok::after{content:" ✓"}
+  #resultado{width:100%;max-width:760px;display:none}
+  #resultado h2{text-align:center;margin:8px 0}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;font-size:14px}
+  th,td{padding:8px;text-align:center;border-bottom:1px solid #ddd}
+  th{background:#111;color:#7CFC7C}
+  td:nth-child(2){text-align:left;font-weight:bold}
+  tr.p1 td{background:#ffe680}tr.p2 td{background:#eee}tr.p3 td{background:#f2c9a0}
+  .destaques{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+  .destaques div{background:#111;color:#fff;border-radius:8px;padding:8px 12px;font-size:13px;text-align:center}
+  .destaques b{color:#7CFC7C;display:block;font-size:16px}
+  .tiers{background:#1a1a1a;border-radius:8px;overflow:hidden;margin-bottom:10px}
+  .tier{display:flex;min-height:84px;border-bottom:2px solid #1a1a1a}
+  .tier .letra{width:84px;flex:none;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:bold;color:#111}
+  .tier .fila{flex:1;background:#2b2b2b;display:flex;flex-wrap:wrap;gap:6px;padding:8px;align-items:center}
+  .tier .pessoa{background:#f4f4f0;border-radius:6px;padding:6px 10px;font-weight:bold;font-size:15px;text-align:center}
+  .tier .pessoa small{display:block;font-weight:normal;font-size:11px;color:#555}
+  @media(max-width:560px){.cola ul{columns:2}.digitos span{width:32px;height:42px;font-size:26px}}
+</style>
+</head>
+<body>
+<div id="timer">APURAÇÃO EM<b id="relogio">--:--:--</b><small id="eleitores"></small></div>
+
+<div class="urna" id="urna">
+  <div class="tela" id="tela"></div>
+  <div class="lado">
+    <div class="marca">JUSTIÇA ELEITORAL DO GRUPO</div>
+    <div class="teclado" id="teclado"></div>
+    <div class="acoes">
+      <button class="branco" data-a="branco">BRANCO</button>
+      <button class="corrige" data-a="corrige">CORRIGE</button>
+      <button class="confirma" data-a="confirma">CONFIRMA</button>
+    </div>
+  </div>
+</div>
+
+<div class="cola" id="cola"><h2>Cola: número de cada membro</h2><ul id="lista"></ul></div>
+
+<div id="resultado">
+  <h2>🏆 RESULTADO DA APURAÇÃO</h2>
+  <div class="tiers" id="tiers"></div>
+  <div class="destaques" id="destaques"></div>
+  <table><thead><tr><th>#</th><th>Membro</th><th>Carisma</th><th>Participação</th><th>Amado</th><th>Média</th><th>Votos</th></tr></thead><tbody id="tabela"></tbody></table>
+</div>
+
+<script>
+const CRIT = [['carisma','CARISMA'],['participacao','PARTICIPAÇÃO NO GRUPO'],['amado','AMADO']];
+const membros = ['angelo','estavao','Gyovanne','Markola','Menezes','markin','pedro','Paulo','rich','Sarah','yuzin','yan','Gustavo','gabriel pérez','mari','Matheus'];
+const apuracao = new Date('2026-11-26T12:00:00-03:00').getTime();
+// Votos guardados no ntfy.sh (sem conta). Cada mensagem some em 12 h, então a página regrava uma "foto" de todos os votos a cada 2 h.
+const TOPICO = 'https://ntfy.sh/urna-cc5df29bda467cb0f9';
+let desvio = 0, eleitor = localStorage.getItem('eleitor');
+let votados = JSON.parse(localStorage.getItem('votados') || '[]');
+let etapa = 'numero', digitado = '', membro = null, notas = {}, crit = 0;
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+
+function bip(longo) {
+  try {
+    const c = new (window.AudioContext || webkitAudioContext)(), o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = longo ? 880 : 1200; o.connect(g); g.connect(c.destination); g.gain.value = .08;
+    o.start(); o.stop(c.currentTime + (longo ? 1.1 : .08));
+  } catch (e) {}
+}
+
+function caixas(n, valor) {
+  let h = '<div class="digitos">';
+  for (let i = 0; i < n; i++) h += `<span class="${i === valor.length ? 'pisca' : ''}">${valor[i] || ''}</span>`;
+  return h + '</div>';
+}
+
+function desenha() {
+  const t = $('tela');
+  if (etapa === 'fim') { t.innerHTML = '<div class="fim">FIM</div>'; return; }
+  if (etapa === 'encerrada') { t.innerHTML = '<div class="fim" style="font-size:34px;text-align:center">VOTAÇÃO<br>ENCERRADA</div>'; return; }
+  if (etapa === 'numero') {
+    const m = digitado.length === 2 ? membros[+digitado - 1] : null;
+    t.innerHTML = `<h1>SEU VOTO PARA</h1><div class="cargo">MEMBRO DO GRUPO</div>
+      <div class="campo">Número: ${caixas(2, digitado)}</div>
+      ${digitado.length === 2 ? (m ? `<div class="nome">${m}</div>${votados.includes(m) ? '<div class="notas">Você já votou neste membro. Confirmar troca as notas.</div>' : ''}` : '<div class="nome">NÚMERO ERRADO</div>') : ''}
+      <div class="rodape">Digite o número do membro (01 a ${pad(membros.length)}).<br>Aperte a tecla:<br><b>CONFIRMA</b> para continuar<br><b>CORRIGE</b> para reiniciar este voto</div>`;
+    return;
+  }
+  const [chave, rot] = CRIT[crit];
+  const feitas = CRIT.slice(0, crit).map(([k, r]) => `${r}: <b>${notas[k]}</b>`).join('<br>');
+  t.innerHTML = `<h1>NOTA PARA <b>${membro}</b></h1><div class="cargo">${rot}</div>
+    <div class="campo">Nota (0 a 10): ${caixas(2, digitado)}</div>
+    ${digitado && +digitado > 10 ? '<div class="nome">NOTA INVÁLIDA</div>' : ''}
+    <div class="notas">${feitas}</div>
+    <div class="rodape">Etapa ${crit + 1} de 3.<br>Aperte a tecla:<br><b>CONFIRMA</b> para gravar a nota<br><b>CORRIGE</b> para apagar<br><b>BRANCO</b> para cancelar este membro</div>`;
+}
+
+function tecla(d) {
+  if (etapa === 'fim' || etapa === 'encerrada') return;
+  if (digitado.length < 2) { digitado += d; bip(); desenha(); }
+}
+
+async function acao(a) {
+  if (etapa === 'encerrada') return;
+  if (etapa === 'fim') { etapa = 'numero'; desenha(); return; }
+  bip();
+  if (a === 'corrige') { digitado = ''; desenha(); return; }
+  if (a === 'branco') { etapa = 'numero'; digitado = ''; desenha(); return; }
+  if (etapa === 'numero') {
+    const m = digitado.length === 2 && membros[+digitado - 1];
+    if (!m) return;
+    membro = m; notas = {}; crit = 0; digitado = ''; etapa = 'nota'; desenha(); return;
+  }
+  if (!digitado || +digitado > 10) return;
+  notas[CRIT[crit][0]] = +digitado; digitado = '';
+  if (crit < 2) { crit++; desenha(); return; }
+  if (Date.now() + desvio >= apuracao) { etapa = 'encerrada'; desenha(); return; }
+  let r;
+  try { r = await fetch(TOPICO, { method: 'POST', body: JSON.stringify({ t: 'voto', e: eleitor, m: membro, n: notas }) }); } catch (e) {}
+  if (!r || !r.ok) { alert('Erro ao votar, tente de novo'); etapa = 'numero'; desenha(); return; }
+  if (!votados.includes(membro)) votados.push(membro);
+  localStorage.setItem('votados', JSON.stringify(votados));
+  bip(true); etapa = 'fim'; desenha(); lista();
+  setTimeout(() => { if (etapa === 'fim') { etapa = 'numero'; desenha(); } }, 2500);
+}
+
+function lista() {
+  $('lista').innerHTML = membros.map((m, i) => `<li class="${votados.includes(m) ? 'ok' : ''}">${pad(i + 1)} · ${m}</li>`).join('');
+}
+
+function mostraResultado(res) {
+  $('urna').style.display = 'none'; $('cola').style.display = 'none'; $('resultado').style.display = 'block';
+  // tier pela média das três notas: S 9+, A 7,5+, B 6+, C 4+, D abaixo de 4 ou sem votos
+  const TIERS = [['S', '#ff7f7f', 9], ['A', '#ffbf7f', 7.5], ['B', '#ffdf7f', 6], ['C', '#bfff7f', 4], ['D', '#7fbfff', -1]];
+  $('tiers').innerHTML = TIERS.map(([l, cor, min], i) => {
+    const max = i ? TIERS[i - 1][2] : Infinity;
+    const quem = res.filter(r => l === 'D' ? (r.total < 4 || !r.votos) : (r.votos && r.total >= min && r.total < max));
+    return `<div class="tier"><div class="letra" style="background:${cor}">${l}</div><div class="fila">${quem.map(r => `<div class="pessoa">${r.nome}<small>${r.votos ? r.total.toFixed(1) : 'sem votos'}</small></div>`).join('')}</div></div>`;
+  }).join('');
+  $('tabela').innerHTML = res.map((r, i) => `<tr class="p${i + 1}"><td>${i + 1}º</td><td>${r.nome}</td><td>${r.carisma}</td><td>${r.participacao}</td><td>${r.amado}</td><td><b>${r.total}</b></td><td>${r.votos}</td></tr>`).join('');
+  const top = k => [...res].sort((a, b) => b[k] - a[k])[0];
+  $('destaques').innerHTML = CRIT.map(([k, rot]) => `<div>${rot}<b>${top(k).nome}</b>${top(k)[k]}</div>`).join('');
+}
+
+const notaOk = n => n && ['carisma','participacao','amado'].every(c => Number.isInteger(n[c]) && n[c] >= 0 && n[c] <= 10);
+
+// lê todas as mensagens do tópico e junta: { eleitor: { membro: {carisma, participacao, amado, t} } }; voto depois da apuração não conta
+async function leVotos() {
+  const txt = await (await fetch(TOPICO + '/json?poll=1&since=all', { cache: 'no-store' })).text();
+  const votos = {}; let ultimaFoto = 0;
+  const msgs = txt.split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch (e) { return null; } }).filter(m => m && m.event === 'message');
+  msgs.sort((a, b) => a.time - b.time);
+  for (const msg of msgs) {
+    let d; try { d = JSON.parse(msg.message); } catch (e) { continue; }
+    if (d.t === 'foto' && d.v && typeof d.v === 'object') {
+      ultimaFoto = Math.max(ultimaFoto, msg.time * 1000);
+      for (const [e, ms] of Object.entries(d.v)) for (const [m, n] of Object.entries(ms || {}))
+        if (membros.includes(m) && notaOk(n) && n.t <= apuracao && !(votos[e] && votos[e][m] && votos[e][m].t > n.t)) (votos[e] ||= {})[m] = n;
+    } else if (d.t === 'voto' && membros.includes(d.m) && notaOk(d.n) && typeof d.e === 'string') {
+      const t = msg.time * 1000;
+      if (t <= apuracao && !(votos[d.e] && votos[d.e][d.m] && votos[d.e][d.m].t > t))
+        (votos[d.e] ||= {})[d.m] = { carisma: d.n.carisma, participacao: d.n.participacao, amado: d.n.amado, t };
+    }
+  }
+  // regrava a foto se a última tem mais de 2 h, para os votos antigos não expirarem
+  if (Object.keys(votos).length && Date.now() - ultimaFoto > 2 * 3600e3)
+    fetch(TOPICO, { method: 'POST', body: JSON.stringify({ t: 'foto', v: votos }) }).catch(() => {});
+  return votos;
+}
+
+function resultado(votos) {
+  return membros.map(m => {
+    const ns = Object.values(votos).map(v => v[m]).filter(Boolean);
+    const media = c => ns.length ? +(ns.reduce((s, n) => s + n[c], 0) / ns.length).toFixed(2) : 0;
+    const r = { nome: m, votos: ns.length, carisma: media('carisma'), participacao: media('participacao'), amado: media('amado') };
+    r.total = +((r.carisma + r.participacao + r.amado) / 3).toFixed(2);
+    return r;
+  }).sort((a, b) => b.total - a.total);
+}
+
+async function estado() {
+  let votos;
+  try { votos = await leVotos(); } catch (e) { return false; }
+  $('eleitores').textContent = Object.keys(votos).length + ' pessoa(s) já votaram';
+  if (Date.now() + desvio >= apuracao) { mostraResultado(resultado(votos)); $('timer').innerHTML = '<b>APURAÇÃO ENCERRADA</b>'; return true; }
+  return false;
+}
+
+function relogio() {
+  const falta = apuracao - (Date.now() + desvio);
+  if (falta <= 0) { estado(); etapa = 'encerrada'; desenha(); return; }
+  const s = Math.floor(falta / 1000);
+  $('relogio').textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+  setTimeout(relogio, 1000 - (falta % 1000));
+}
+
+(async () => {
+  if (!eleitor) { eleitor = crypto.randomUUID(); localStorage.setItem('eleitor', eleitor); }
+  $('teclado').innerHTML = [1,2,3,4,5,6,7,8,9].map(n => `<button data-d="${n}">${n}</button>`).join('') + '<button class="zero" data-d="0">0</button>';
+  document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => tecla(b.dataset.d));
+  document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => acao(b.dataset.a));
+  document.addEventListener('keydown', ev => {
+    if (/^\d$/.test(ev.key)) tecla(ev.key);
+    else if (ev.key === 'Enter') acao('confirma');
+    else if (ev.key === 'Backspace') acao('corrige');
+    else if (ev.key === 'Escape') acao('branco');
+  });
+  const fechada = await estado();
+  lista(); desenha();
+  if (!fechada) { relogio(); setInterval(estado, 30000); }
+})();
+</script>
+</body>
+</html>
