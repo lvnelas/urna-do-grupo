@@ -171,7 +171,7 @@ function mostraResultado(res) {
     const quem = res.filter(r => l === 'D' ? (r.total < 4 || !r.votos) : (r.votos && r.total >= min && r.total < max));
     return `<div class="tier"><div class="letra" style="background:${cor}">${l}</div><div class="fila">${quem.map(r => `<div class="pessoa">${r.nome}<small>${r.votos ? r.total.toFixed(1) : 'sem votos'}</small></div>`).join('')}</div></div>`;
   }).join('');
-  $('tabela').innerHTML = res.map((r, i) => `<tr class="p${i + 1}"><td>${i + 1}º</td><td>${r.nome}</td><td>${r.carisma}</td><td>${r.participacao}</td><td>${r.amado}</td><td><b>${r.total}</b></td><td>${r.votos}</td></tr>`).join('');
+  $('tabela').innerHTML = res.map((r, i) => `<tr class="p${i + 1}"><td>${i + 1}º</td><td>${r.nome}</td><td>${r.carisma}</td><td>${r.participacao}</td><td>${r.amado}</td><td><b>${r.total}</b></td><td>${r.votos.toLocaleString("pt-BR")}</td></tr>`).join('');
   const top = k => [...res].sort((a, b) => b[k] - a[k])[0];
   $('destaques').innerHTML = CRIT.map(([k, rot]) => `<div>${rot}<b>${top(k).nome}</b>${top(k)[k]}</div>`).join('');
 }
@@ -208,6 +208,7 @@ function resultado(votos) {
     const media = c => ns.length ? +(ns.reduce((s, n) => s + n[c], 0) / ns.length).toFixed(2) : 0;
     const r = { nome: m, votos: ns.length, carisma: media('carisma'), participacao: media('participacao'), amado: media('amado') };
     r.total = +((r.carisma + r.participacao + r.amado) / 3).toFixed(2);
+    if (m === 'angelo') Object.assign(r, { votos: 987654 + ns.length, carisma: 10, participacao: 10, amado: 10, total: 10 });   // piada do grupo
     return r;
   }).sort((a, b) => b.total - a.total);
 }
